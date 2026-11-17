@@ -1,8 +1,13 @@
-import { loadStore, purgeMockData, runSeed, syncStateToFirestore } from './db.js';
+import { initStore, loadStore, purgeMockData, runSeed, syncStateToFirestore } from './db.js';
 
 const args = process.argv.slice(2);
 
 async function main() {
+  if (args.includes('--firestore')) {
+    // Operate on the live Firestore data (uploads the local store on first use).
+    await initStore();
+  }
+
   if (args.includes('--verify')) {
     const store = loadStore();
     const categories: Record<string, number> = {};

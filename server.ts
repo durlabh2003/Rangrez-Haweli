@@ -16,16 +16,17 @@ import {
   generateCraftSvg,
   getAdminAllowlist,
   getFirebaseAdminAuth,
-  getFirestoreStatus,
   getPublicArtisans,
   getPublicBlogPosts,
   getPublicBundles,
   getPublicCoupons,
   getPublicProducts,
   getPublicReviews,
+  initStore,
   isProductionEnv,
   loadStore,
   probeFirestoreConnection,
+  refreshStoreIfStale,
   purgeMockData,
   recomputeDerivedProductStats,
   recordAuditLog,
@@ -539,12 +540,22 @@ export async function createApp() {
     app.set('trust proxy', 1);
   }
 
-  // Initial store load & non-blocking Firestore connection probe
-  loadStore();
-  void probeFirestoreConnection();
+  // Load the store (hydrates from Firestore when credentials are configured).
+  // A failure here is retried per request by the middleware below.
+  await initStore().catch(() => {});
 
   // Compression & Security Headers
   app.use(compression());
+
+  // Keep this instance's in-memory store in step with Firestore (throttled version check).
+  app.use(async (_req, res, next) => {
+    try {
+      await refreshStoreIfStale();
+      next();
+    } catch {
+      res.status(503).json({ error: 'Store temporarily unavailable. Please retry.' });
+    }
+  });
   const isDev = process.env.NODE_ENV !== 'production';
 
   app.use(
@@ -1259,9 +1270,6 @@ export async function createApp() {
       });
       return createdOrUpdated;
     });
-    if (getFirestoreStatus().connected) {
-      void syncStateToFirestore(loadStore());
-    }
     res.status(201).json({ lead });
   });
 
@@ -1304,9 +1312,6 @@ export async function createApp() {
       });
       return ticket;
     });
-    if (getFirestoreStatus().connected) {
-      void syncStateToFirestore(loadStore());
-    }
     res.status(201).json({ query: created });
   });
 
@@ -1959,9 +1964,6 @@ export async function createApp() {
       });
       return appRow;
     });
-    if (getFirestoreStatus().connected) {
-      void syncStateToFirestore(loadStore());
-    }
     res.status(201).json(application);
   });
 
@@ -2667,14 +2669,13 @@ export async function createApp() {
       targetId: 'seed',
       details: `reset=${reset}, products=${summary.products}`,
     });
-    if (getFirestoreStatus().connected) {
-      await syncStateToFirestore(state);
-    }
+    await syncStateToFirestore(state);
     res.json({ ok: true, summary });
   });
 
   app.post('/api/admin/purge-mock', requireAdmin, async (req: AuthedRequest, res) => {
     const result = purgeMockData();
+    await syncStateToFirestore(loadStore());
     await withStoreLock((state) => {
       recordAuditLog(state, {
         actorEmail: req.user!.email || 'admin',

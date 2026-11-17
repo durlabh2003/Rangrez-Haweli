@@ -22,6 +22,7 @@ import type {
   Review,
   SupportQuery,
 } from '../types.js';
+import { FirestoreStateStore, type FsLike, type PersistResult } from './firestoreStore.js';
 import {
   DEFAULT_ADMIN_CONFIG,
   DEFAULT_CLAIMS_REGISTRY,
@@ -160,7 +161,7 @@ export async function probeFirestoreConnection(): Promise<{
   }
   // Without credentials the Firestore client rejects outside this try/catch
   // (an unhandled rejection inside google-gax) and crashes the process.
-  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && !process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+  if (!hasFirestoreCredentials()) {
     firestoreReachable = false;
     firestoreStatusNote = 'Firestore Admin skipped (no credentials configured). Local atomic cache active.';
     return { connected: false, note: firestoreStatusNote };
@@ -189,7 +190,7 @@ export function getFirestoreStatus() {
 // ---------- Atomic Mutex Lock for Store Operations ----------
 let lockTail: Promise<void> = Promise.resolve();
 
-export async function withStoreLock<T>(fn: (state: DatabaseState) => Promise<T> | T): Promise<T> {
+async function runExclusive<T>(fn: () => Promise<T> | T): Promise<T> {
   const prev = lockTail;
   let release!: () => void;
   lockTail = new Promise<void>((res) => {
@@ -197,13 +198,138 @@ export async function withStoreLock<T>(fn: (state: DatabaseState) => Promise<T> 
   });
   await prev;
   try {
+    return await fn();
+  } finally {
+    release();
+  }
+}
+
+export async function withStoreLock<T>(fn: (state: DatabaseState) => Promise<T> | T): Promise<T> {
+  await initStore();
+  return runExclusive(async () => {
+    if (remoteStore) {
+      // Always start a write from the latest committed state.
+      adoptRemote(await remoteStore.refreshIfChanged(0));
+    }
     const state = loadStore();
     const result = await fn(state);
     recomputeDerivedProductStats(state);
     saveStore(state);
+    if (remoteStore) {
+      await persistRemote(state);
+    }
     return result;
-  } finally {
-    release();
+  });
+}
+
+// ---------- Firestore as system of record ----------
+// When Firestore credentials are present, Firestore holds the data and each server
+// instance keeps an in-memory copy (memoryState) refreshed via a version token.
+// Without credentials, the local JSON file under DATA_DIR is used as before.
+
+function hasFirestoreCredentials(): boolean {
+  return Boolean(
+    process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+      process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+      process.env.FIRESTORE_EMULATOR_HOST
+  );
+}
+
+const STORE_SYNC_INTERVAL_MS = Number(process.env.STORE_SYNC_INTERVAL_MS || 2000);
+let remoteStore: FirestoreStateStore | null = null;
+let initPromise: Promise<void> | null = null;
+
+export function isFirestoreBackend(): boolean {
+  return remoteStore !== null;
+}
+
+/** Test hook: back the store with a given Firestore-like instance (or null for file mode). */
+export function __setFirestoreForTests(db: FsLike | null): void {
+  remoteStore = db ? new FirestoreStateStore(db, createInitialEmptyState) : null;
+  initPromise = null;
+  memoryState = null;
+}
+
+function adoptRemote(fresh: DatabaseState | null): void {
+  if (!fresh) return;
+  reconcileSeedAssets(fresh);
+  memoryState = fresh;
+}
+
+/** Hydrate from Firestore once per instance. Rejects (and retries next call) if Firestore is unreachable. */
+export function initStore(): Promise<void> {
+  if (!initPromise) {
+    initPromise = doInitStore().catch((err) => {
+      initPromise = null;
+      throw err;
+    });
+  }
+  return initPromise;
+}
+
+async function doInitStore(): Promise<void> {
+  if (!remoteStore && process.env.STORE_BACKEND !== 'file' && hasFirestoreCredentials()) {
+    const db = getFirebaseAdminDb();
+    if (db) remoteStore = new FirestoreStateStore(db as unknown as FsLike, createInitialEmptyState);
+  }
+  if (!remoteStore) {
+    loadStore();
+    return;
+  }
+  const store = remoteStore;
+  try {
+    await runExclusive(async () => {
+      const remote = await store.hydrate();
+      if (remote) {
+        const changed = reconcileSeedAssets(remote);
+        memoryState = remote;
+        if (changed) await store.persist(remote);
+      } else {
+        // First run against an empty Firestore: upload the local store
+        // (seeded mock catalog in development, empty in production).
+        memoryState = null;
+        await store.persist(loadStore());
+      }
+    });
+    firestoreReachable = true;
+    firestoreStatusNote = 'Cloud Firestore is the system of record (Admin SDK).';
+  } catch (err) {
+    firestoreReachable = false;
+    firestoreStatusNote = `Firestore unavailable: ${err instanceof Error ? err.message.slice(0, 160) : String(err)}`;
+    console.error('[store]', firestoreStatusNote);
+    throw err;
+  }
+}
+
+/** Per-request freshness check (throttled to one version read per STORE_SYNC_INTERVAL_MS). */
+export async function refreshStoreIfStale(): Promise<void> {
+  await initStore();
+  const store = remoteStore;
+  if (!store) return;
+  await runExclusive(async () => {
+    adoptRemote(await store.refreshIfChanged(STORE_SYNC_INTERVAL_MS));
+  });
+}
+
+async function persistRemote(state: DatabaseState): Promise<PersistResult> {
+  const store = remoteStore!;
+  try {
+    const result = await store.persist(state);
+    if (result.foreign) {
+      // Another instance committed between our refresh and our commit. Our docs are
+      // written; re-hydrate to pick up theirs, then fix derived stats if needed.
+      const merged = await store.hydrate();
+      if (merged) {
+        recomputeDerivedProductStats(merged);
+        memoryState = merged;
+        await store.persist(merged);
+      }
+    }
+    return result;
+  } catch (err) {
+    // Drop any unsaved in-memory change on the next refresh.
+    store.invalidate();
+    throw err;
   }
 }
 
@@ -396,44 +522,25 @@ export async function syncStateToFirestore(state: DatabaseState): Promise<{
   collectionsWritten: number;
   note: string;
 }> {
-  const db = getFirebaseAdminDb();
-  if (!db) {
-    return { synced: false, collectionsWritten: 0, note: 'Firestore Admin not initialized.' };
-  }
   try {
-    await db.collection('config').doc('store').set({
-      config: state.config,
-      claims: state.claims,
-      updatedAt: new Date().toISOString(),
+    await initStore();
+    if (!remoteStore) {
+      return {
+        synced: false,
+        collectionsWritten: 0,
+        note: 'Firestore persistence is off (no credentials configured).',
+      };
+    }
+    const result = await runExclusive(async () => {
+      saveStore(state);
+      return persistRemote(state);
     });
-
-    const writeCollectionChunked = async <T extends { id?: string; code?: string }>(
-      colName: string,
-      rows: T[],
-      keyFn: (row: T) => string
-    ) => {
-      const chunkSize = 350;
-      for (let i = 0; i < rows.length; i += chunkSize) {
-        const batch = db.batch();
-        const slice = rows.slice(i, i + chunkSize);
-        for (const row of slice) {
-          batch.set(db.collection(colName).doc(keyFn(row)), JSON.parse(JSON.stringify(row)));
-        }
-        await batch.commit();
-      }
-    };
-
-    await writeCollectionChunked('products', state.products, (p) => p.id);
-    await writeCollectionChunked('reviews', state.reviews, (r) => r.id);
-    await writeCollectionChunked('orders', state.orders, (o) => o.id);
-    await writeCollectionChunked('b2bApplications', state.b2bApplications, (a) => a.id);
-    await writeCollectionChunked('quotes', state.b2bQuotes, (q) => q.id);
-    await writeCollectionChunked('coupons', state.coupons, (c) => c.code);
-    await writeCollectionChunked('leads', state.leads, (l) => l.id);
-    await writeCollectionChunked('supportQueries', state.supportQueries, (s) => s.id);
-
     firestoreReachable = true;
-    return { synced: true, collectionsWritten: 9, note: 'Firestore synced successfully.' };
+    return {
+      synced: true,
+      collectionsWritten: result.written + result.deleted,
+      note: `Firestore synced: ${result.written} written, ${result.deleted} deleted.`,
+    };
   } catch (err) {
     return {
       synced: false,
@@ -460,21 +567,24 @@ export function runSeed(opts: { reset?: boolean } = {}): {
   };
 } {
   let current: DatabaseState;
-  if (opts.reset || !fs.existsSync(STORE_PATH)) {
+  if (opts.reset) {
+    current = createInitialEmptyState();
+  } else if (memoryState) {
+    // Seed on top of the live state (Firestore-hydrated or file-loaded).
+    current = memoryState;
+  } else if (!fs.existsSync(STORE_PATH)) {
     current = createInitialEmptyState();
   } else {
     try {
       current = JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8')) as DatabaseState;
-      if (!current.claims) current.claims = [...DEFAULT_CLAIMS_REGISTRY];
-      if (!current.config) current.config = { ...DEFAULT_ADMIN_CONFIG };
-      if (!current.auditLogs) current.auditLogs = [];
-      if (!current.heritageMistakeReports) current.heritageMistakeReports = [];
-      if (!current.leads) current.leads = [];
-      if (!current.supportQueries) current.supportQueries = [];
-      if (!current.userMoharBalances) current.userMoharBalances = {};
-      if (!current.telemetrySummary) current.telemetrySummary = { vitalsCount: 0, errorCount: 0 };
     } catch {
       current = createInitialEmptyState();
+    }
+  }
+  const defaults = createInitialEmptyState();
+  for (const key of Object.keys(defaults) as (keyof DatabaseState)[]) {
+    if (current[key] === undefined || current[key] === null) {
+      (current as unknown as Record<string, unknown>)[key] = defaults[key];
     }
   }
 
