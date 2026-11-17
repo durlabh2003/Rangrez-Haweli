@@ -121,7 +121,7 @@ test('diff writes: only changed docs, deletes propagate, other instance sees it'
   await b.hydrate();
 
   const removed = state.reviews.shift()!;
-  state.products[0].stock = 12345;
+  state.products[0].price = 12345;
   const r = await a.persist(state);
   // product doc + review delete + reviews order doc
   assert.equal(r.written, 2);
@@ -130,7 +130,7 @@ test('diff writes: only changed docs, deletes propagate, other instance sees it'
 
   const fresh = (await b.refreshIfChanged(0))!;
   assert.ok(fresh, 'b should re-hydrate after a foreign write');
-  assert.equal(fresh.products[0].stock, 12345);
+  assert.equal(fresh.products[0].price, 12345);
   assert.ok(!fresh.reviews.some((x) => x.id === removed.id));
   assert.equal(await b.refreshIfChanged(0), null, 'no change -> no re-hydrate');
 });
