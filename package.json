@@ -14,6 +14,7 @@
     "seed:reset": "tsx src/server/seedCli.ts --reset",
     "seed:verify": "tsx src/server/seedCli.ts --verify",
     "seed:purge-mock": "tsx src/server/seedCli.ts --purge",
+    "seed:firestore": "tsx src/server/seedCli.ts --firestore",
     "test": "tsx --test tests/pricing.test.ts tests/firestoreStore.test.ts && tsx tests/acceptance.ts"
   },
   "dependencies": {
