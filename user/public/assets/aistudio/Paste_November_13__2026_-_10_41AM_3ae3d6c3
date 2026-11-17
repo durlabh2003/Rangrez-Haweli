@@ -1,0 +1,176 @@
+Master Prompt: Rajasthani D2C + B2B E-Commerce Website
+Research-backed, copy-paste prompt for an AI builder (Claude Code, Cursor, Lovable, v0, etc.)
+Part 1: Research Summary (what the prompt is built on)
+Brands studied: Fabindia, Anokhi, Jaipur Rugs, Jaypore, iTokri, Okhai, Good Earth.
+What they do well (and the prompt copies):
+• Artisan provenance. Anokhi sources from artisan cooperatives around Jaipur and sells on documented craft origin. Jaipur Rugs grew from two looms and nine weavers to over 7,000 looms and 40,000 artisans, and tells that story everywhere. So every product page needs a maker story, a craft origin and a GI/authenticity badge.
+• Price transparency and trust. Rajasthani handicraft pricing is often opaque, with markups of several times cost. A transparent 'Where your money goes' breakdown is a real differentiator.
+• Content-led commerce. iTokri and Anokhi run craft blogs and museum-style storytelling (for example the Anokhi Museum of Hand Printing). Education sells handmade goods.
+• Personalisation. Jaipur Rugs' D2C review (MICA study) stresses personalised touchpoints across the customer lifecycle. D2C's edge over marketplaces is personalisation and fast feedback loops.
+• Omnichannel and B2B. Established players run D2C alongside wholesale, export and corporate gifting, and explain how D2C complements retail partners rather than competing with them.
+Rajasthani visual and craft vocabulary (the design system draws from this):
+• Textiles: Sanganeri block print (fine florals on white or off-white), Bagru and Dabu (earthy indigo, red, black, geometric, natural dyes), Bandhani (tie-dye dots), Leheriya (diagonal wave stripes, once a Rajput turban marker), Kota Doria, Jaipuri razai quilts, dhurries. Block printing uses gadh (background), rekh (outline) and datta (fill) blocks.
+• Jewellery: Meenakari (enamel), Kundan and Jadau, Thewa (gold fused on glass, Pratapgarh, GI tag 2014), lac bangles, tribal silver.
+• Art: Phad scroll paintings (Shahpura, ~700 years old), Pichwai, miniature painting, Kathputli puppets, Blue Pottery (Jaipur).
+• Architecture: Jharokha windows, Hawa Mahal lattice (jaali), cusped arches, chhatris, havelis, stepwells, Mehrangarh and Amer forts, Pink City.
+• Colour: turmeric yellow, kesariya saffron, Jaipur pink, marigold orange, indigo (Bagru), peacock green, maroon and sindoor red, desert sand, gold zari.
+• Culture and sound: Ghoomar dance, Manganiyar music, camel caravans, Pushkar fair, Teej, Gangaur, Holi, Diwali, kulhad chai.
+Part 2: The Prompt (copy everything below this line)
+ROLE
+You are a senior full-stack engineer, UX designer and motion designer. Build a production-ready, end-to-end D2C + B2B e-commerce website for a premium Rajasthani handcrafted brand. Deliver working code, not mockups. Work in phases, run and test each phase, and explain assumptions briefly.
+1. BRAND
+• Working name: Rangrez Haveli (replace with [BRAND_NAME]).
+• Tagline: 'Rajasthan, crafted by hand. Delivered to your door.'
+• Positioning: Premium but accessible, artisan-first, ethically made, with documented craft provenance (the Anokhi, Fabindia and Jaipur Rugs playbook, in a more joyful and modern wrapper).
+• Voice: Warm, proud, playful. Light Hinglish touches in microcopy ('Padharo!' to welcome, 'Mhare Rajasthan' in the footer, 'Chai pe charcha' for the blog) with full English clarity. Always provide an EN / हिन्दी toggle.
+• Audiences: (a) D2C shoppers in India and the diaspora, gift buyers; (b) B2B buyers: retailers, interior designers, hotels and resorts, corporate gifting, export importers.
+2. TECH STACK (use unless I say otherwise)
+• Frontend: Next.js 14+ (App Router, TypeScript), Tailwind CSS, shadcn/ui primitives, Framer Motion plus GSAP (ScrollTrigger) and Lenis smooth scroll, Lottie for micro-illustrations, optional React Three Fiber only for one hero effect.
+• State and data: Zustand (cart, wishlist, UI), TanStack Query, Zod validation.
+• Backend: Next.js route handlers or tRPC, PostgreSQL with Prisma, Redis (cache, rate limit), NextAuth/Auth.js (email OTP, Google, phone OTP).
+• Payments (India-first): Razorpay (UPI, cards, netbanking, wallets, EMI) plus Cash on Delivery with a small verification step; Stripe/PayPal for international orders.
+• Other services: Meilisearch or Algolia (search), Cloudinary (images, video, AVIF/WebP), Sanity or MDX (blog CMS), Resend (transactional email), WhatsApp Business API links (order updates, support), Shiprocket/Delhivery (shipping, pincode check), GST-compliant invoice PDF generation.
+• Quality: Lighthouse 90+ on mobile, WCAG 2.2 AA, SEO (SSR/ISR, JSON-LD, sitemap), i18n-ready, Playwright e2e tests for the checkout and B2B flows.
+• Seed the database with realistic data at the very end of development (see sections 7 and 13).
+3. DESIGN SYSTEM: 'Modern Rajputana'
+Palette (CSS variables, WCAG-checked):
+• Day mode 'Dhoop': background sand-ivory #FBF3E4, surface #FFFFFF, ink deep-maroon-brown #2A1410, primary Jaipur pink-maroon #B3123F, accent kesariya #F28C1B, secondary turmeric #F4B400, indigo #1F3A93, peacock green #0F7B6C, gold #C9A227.
+• Night mode 'Raat': background midnight indigo #0E1226, surface #171C3A, ink #F6EBD6, same accents slightly lifted; gold zari glows; subtle star-field and lantern effects.
+• Optional third mode 'Tyohaar' (festive): confetti, extra gold, marigold garlands on cards, auto-suggested near Diwali, Holi and Teej.
+• Mode toggle is a sun/moon charkha-style switch with a smooth radial-wipe transition. Respect system preference and remember the choice.
+Typography: Display: a high-contrast serif with character (Playfair Display, Cormorant, or Yatra One for hero words). Body: Inter or Poppins. Devanagari: Tiro Devanagari Hindi or Noto Sans Devanagari. Section numbers in a 'Rozha One' style for a poster feel.
+Rajasthani UI elements (build as reusable SVG/CSS components):
+• Jharokha arch frames for hero media, modals and product images (cusped arch clip-path).
+• Jaali lattice patterns as section dividers and subtle background textures (Hawa Mahal).
+• Bandhani dot grid as loaders, bullet points and hover patterns.
+• Block-print border strips (Sanganeri floral, Bagru geometric) as animated section borders that 'stamp' in on scroll.
+• Leheriya wave stripes as button hover fills and page transitions.
+• Meenakari-style badges for 'Handmade', 'GI Tagged', 'Bestseller'.
+• Phad-scroll storytelling: horizontally scrolling painted-scroll panels on the About page.
+• Kathputli puppet mascot (small, strings animated) that appears on empty states, 404 and cart-empty pages.
+• Chhatri and fort silhouettes as parallax layers; marigold garland drape across the header on festive mode.
+• Rounded 'haveli window' cards, gold hairline borders, paper-grain texture overlay at 3-4% opacity.
+• Custom cursor: small gold lotus or turban-knot that scales on hover (desktop only).
+• Sound: optional, off by default. A 'mute/unmute' toggle for a soft sitar/rawanhatha loop and a tiny 'jhankar' on add to cart.
+4. THE LOADER (make it crazy and joyful)
+Build a 'Baraat Loader' that plays on first visit per session and when heavy pages load. Max about 2.8 s total, skippable ('Skip, mujhe jaldi hai'), and never blocks content longer than needed (progress is tied to real asset loading, with a minimum of about 1.6 s so the animation lands).
+Sequence:
+1.  Night-indigo screen. A single diya flickers; its flame draws a jharokha arch outline.
+2.  A bandhani dot mandala assembles dot by dot in the arch; the dots fill with colour as the percentage counter (in Devanagari numerals that morph to English) climbs.
+3.  A kathputli puppet drops in on strings, dances a ghoomar-style spin, tips its turban, then 'pulls' the arch open like curtains.
+4.  A tiny camel caravan crosses the progress line at the bottom; the lead camel carries the % badge.
+5.  Rotating humorous micro-messages, one every 700 ms: 'Chai ubal rahi hai…', 'Camel ko parking mil rahi hai', 'Block pe rang chadh raha hai', 'Haveli ke darwaze khul rahe hain…', 'Ghoomar ki taiyari chal rahi hai'.
+6.  Exit: a colour-burst (Holi gulal / pichkari splash) radiates from the center; the arch zooms toward the viewer and its opening becomes the hero (shared-element handoff so there is no cut).
+Rules: use Lottie/SVG plus GSAP, with no heavy video. Honour prefers-reduced-motion with a simple fade and logo. Cache so repeat visits within the session skip it. Also build smaller loaders: bandhani-dot spinner for buttons, leheriya shimmer skeletons for product grids, and a loom thread-weaving progress bar for route changes.
+5. LANDING PAGE (must hook within 3 seconds)
+Goal: a first screen that makes someone stop scrolling, then guides them to shop, with proven D2C conversion structure.
+Sections, in order:
+1.  Announcement bar: rotating offers ('Free shipping above ₹1,999', 'COD available', 'Wholesale? Get 40% margin: Join B2B') plus a language and mode toggle.
+2.  Sticky header: logo, mega-menu (categories with image previews), search with instant suggestions and trending crafts, wishlist heart with count, account, cart drawer trigger, and a distinct 'B2B / Wholesale' pill.
+3.  Hero: 'The Living Jharokha'. A full-viewport, jharokha-shaped window. Inside it, layered parallax (dunes, fort, sun, chhatri, birds) that reacts to cursor and mobile gyroscope. A headline reveals word by word ('Wear the desert. Gift a palace.'). Three CTAs: Shop Now, Explore Crafts, Shop Wholesale. A looping muted video of artisans (block printing, lac bangle making) plays in a small arch with 'Meet the maker' caption.
+4.  Interactive banner carousel (5 slides), each a different interaction, auto-advance with progress ring and swipe/keyboard support:
+    ◦ Block Print Studio: drag a slider to reveal a plain fabric becoming printed; click a block-stamp to 'print' a motif live.
+    ◦ Bandhani Colour Switcher: choose swatches (kesariya, peacock, rani pink, indigo) and the product image recolours smoothly.
+    ◦ Shop the Look: a styled haveli-room photo with clickable hotspots that pop product cards.
+    ◦ Meenakari Spotlight: cursor-following light that makes enamel sparkle; 3D-tilt card.
+    ◦ Festive Countdown: timer to the next festival (Diwali, Teej, Holi) with a gift-hamper CTA and confetti on hover.
+5.  Trust strip: GI/authentic craft, free returns window, secure payments (UPI icons), artisan-made, pan-India and worldwide shipping, WhatsApp support.
+6.  Shop by Category: 6 big arch-framed tiles with hover video previews.
+7.  Bestsellers and New Arrivals: tabs plus horizontal snap-scroll with quick-add, wishlist heart (animated burst), and 'x people viewing' or low-stock urgency (honest data only).
+8.  'Meet the Makers' scroll story: pinned section where Phad-style panels scroll horizontally, each showing an artisan, village, craft and the products they made.
+9.  Craft Explorer: an interactive stylised Rajasthan map; click Sanganer, Bagru, Pratapgarh, Shahpura, Jodhpur, Bikaner, Jaipur to see the craft and shop it.
+10.  Where your money goes: animated price-breakdown donut (artisan share, materials, logistics, brand), the transparency angle.
+11.  B2B teaser band: 'Retailers, designers, hotels: wholesale pricing, custom designs, white-label.' With MOQ and margin calculator preview and a Request Catalogue button.
+12.  Reviews and UGC: star ratings, photo reviews, Instagram-style grid, 'Wear it your way' gallery.
+13.  Blog highlights, newsletter signup (first-order discount reward, spin-the-'Ghoomar chakra' wheel that opens after 20 s or on exit intent, once only), footer (links, policies, payment icons, social, address, FAQ, 'Mhare Rajasthan' sign-off with a tiny dancing kathputli).
+Page-transition effect: leheriya diagonal wave wipe between routes. Scroll effects: block-print borders stamping in, jaali pattern parallax, reveal-on-scroll, counters, magnetic buttons, image zoom-on-hover, shared-element transitions from product card to product page.
+6. CORE FEATURES (D2C)
+Catalogue: 6 categories (see section 7) with sub-categories, filters (price, craft type, region, colour, size, material, occasion, rating, in-stock), sort, grid and list toggle, infinite scroll or pagination, active-filter chips, saved filters, recently viewed, 'Similar crafts' and 'Complete the look' recommendations.
+Product page: zoomable gallery with 360/video, size and colour variants, stock and pincode delivery estimate, price with MRP and discount, craft passport (technique, region, GI tag, artisan name and photo, hours of work, care instructions), 'Where your money goes' mini-chart, customer Q&A, reviews with photos, size guide drawer, share, gift-wrap and message option, sticky add-to-cart on mobile, bundle upsell ('Buy the set and save'), back-in-stock alerts, Notify-me.
+Wishlist ('Pasand'): heart on every card with animated burst, guest wishlist stored locally and merged on login, shareable wishlist link, move-to-cart, price-drop alerts.
+Cart: slide-in drawer plus full page; quantity edit, save for later, coupon field, free-shipping progress bar ('Add ₹340 for free delivery'), gift options, cross-sell, estimated tax and delivery, abandoned-cart email/WhatsApp flow.
+Checkout: guest or logged-in; 3 steps with progress (Address, Delivery, Payment); pincode auto-fill and serviceability check; saved addresses; UPI intent/QR, cards, netbanking, wallets, EMI, COD (OTP-confirmed), international cards; GST invoice details toggle; order summary; trust badges; error recovery; confetti and success page with order timeline and 'Share your haul' prompt.
+Orders and account: order history, tracking timeline with courier status, invoice download, returns and exchanges with reason and pickup request, reorder, saved addresses and payment methods, profile with avatar, loyalty points ('Mohar' coins: earn on purchases, reviews, referrals; redeem at checkout), referral link, notification preferences, language, delete account.
+Search: typo-tolerant, Hindi and English, voice search, category scoping, trending and recent searches, no-results page with kathputli and suggestions.
+Growth and retention: coupons, first-order offer, bundles, festival campaigns, flash sales with countdown, referral program, review-incentive emails, back-in-stock, post-purchase cross-sell, email and WhatsApp flows (welcome, abandoned cart, shipped, delivered, review, win-back), UTM and analytics events (GA4, Meta Pixel), A/B-test hooks.
+7. CATALOGUE: 6 CATEGORIES (seed 17 to 20 products each, 108 in total as listed in section 13, with realistic names, INR prices, variants, descriptions, craft and region metadata)
+1.  Textiles and Apparel: Sanganeri and Bagru block-print kurtas, dupattas and sarees, Bandhani and Leheriya dupattas, Kota Doria sarees, men's kurtas and jackets, kidswear.
+2.  Home Furnishing: block-print bedsheets and cushion covers, Jaipuri razai quilts, dhurries and rugs, table linen, curtains.
+3.  Jewellery: Meenakari jhumkas, Kundan sets, Thewa pendants, lac bangles, silver tribal jewellery, anklets.
+4.  Footwear and Leather: mojari/jutti, camel-leather bags, wallets, potlis, belts.
+5.  Art, Décor and Collectibles: Phad paintings, miniature art, blue pottery, Kathputli puppets, brass and wooden figurines, wall hangings.
+6.  Gifting and Festive: Diwali hampers, brass diyas, kulhad sets, bridal and wedding favours, corporate gift boxes, spice and tea gift sets. (Optionally add 7 and 8: Men's Accessories (safas, stoles) and Gourmet and Sweets.)
+8. B2B / WHOLESALE PORTAL
+A separate, clearly signposted area (/b2b) in the same design language, with a more business-focused tone.
+• Landing: value props (margin, MOQ, customisation, export-ready, repeat ordering), client logos and case studies (hotels, boutiques, designers), testimonials, 'Apply for wholesale account'.
+• Application and onboarding: business type, GSTIN (format-validated, verification-ready), IEC for exporters, address, expected volume, documents upload; admin approval with email status.
+• Wholesale pricing: tiered price breaks (e.g. 10/25/50/100+ units), MOQ per SKU, case-pack sizes, price visible only to approved accounts, currency switch (INR, USD, EUR, AED, GBP) for export.
+• Bulk tools: quick-order table (SKU and quantity), CSV upload, reorder previous orders, saved lists/templates, multi-address shipping.
+• Quote and RFQ: request-for-quote form with custom design, colour, packaging and branding (white-label and private label); quote thread with attachments; convert quote to order.
+• Samples: sample-order flow with limited quantity and credit-back on bulk order.
+• Catalogue: downloadable PDF line-sheets and lookbooks (auto-generated per category), seasonal collection previews.
+• Payments and credit: advance, proforma invoice, bank transfer/NEFT details, Razorpay payment links, Net-15/30 credit for approved accounts, GST invoices with HSN codes and e-way bill fields.
+• Corporate gifting builder: pick a budget and quantity, choose products, add logo and message cards, preview packaging, and get an instant quote.
+• Dashboard: orders, invoices, credit balance, quotes, saved lists, dedicated account manager contact with WhatsApp button, margin and savings calculator.
+• Export info: shipping terms (FOB/CIF/DDP), lead times, compliance and certifications, HS codes, FAQs.
+9. CONTENT PAGES
+• Blog ('Rang aur Rivaaz'): CMS-driven, categories (Craft Stories, Style Guides, Home Inspiration, Artisan Diaries, Festivals, Care Guides), featured post, reading-time, table of contents, author, related products embedded in posts, share, newsletter CTA, comments optional, SEO and schema. Seed with 6 articles (e.g. 'Sanganer vs Bagru: how to tell them apart', 'What makes Thewa special', 'How to wash block prints so colours last', 'A Rajasthani festive gifting guide').
+• About: Phad-scroll storytelling timeline, founder and artisan stories, mission, impact numbers (artisans supported, villages, crafts preserved), sustainability and natural-dye practices, certifications, press, team, 'Visit our workshop' video.
+• Craft Library: an illustrated page per craft (Block print, Bandhani, Leheriya, Meenakari, Thewa, Phad, Blue pottery, Kathputli) linking to products.
+• Other: Contact (form, map, WhatsApp, hours), FAQ (accordion, searchable), Shipping and Returns, Privacy, Terms, Size Guide, Care Guide, Track Order, Store Locator (optional), Careers (optional), 404 and 500 with kathputli, offline page.
+10. ADMIN PANEL
+Products and variants CRUD with image upload, inventory, categories, coupons, banners (editable hero and carousel), orders (status, shipment, refunds), customers, B2B applications and quotes, blog, reviews moderation, analytics dashboard (sales, conversion, AOV, top crafts, abandoned carts), roles and permissions, CSV import and export.
+11. ANIMATION AND INTERACTION RULES
+• Easing and timing: 250 to 600 ms for UI, up to 1.2 s for hero choreography; consistent ease (cubic-bezier(.22,1,.36,1)).
+• Micro-interactions: add-to-cart (item flies to cart icon with a small bounce and jhankar), heart burst, button leheriya fill, input focus glow, toast with kathputli bell.
+• Hover: image zoom plus second-image swap, 3D tilt on feature cards, magnetic CTAs.
+• Scroll: pinned storytelling, parallax layers, stamp-in borders, counters, progress bar styled as a thread.
+• Performance guardrails: animate only transform and opacity, lazy-load heavy Lottie/Three assets, pause off-screen animations, cap particle counts, GPU-safe on low-end Android. Honour prefers-reduced-motion and provide a 'Reduce animations' toggle in the footer.
+• Mobile-first: bottom tab bar (Home, Shop, Wishlist, Cart, Account), swipe gestures, thumb-zone CTAs, 44px+ tap targets.
+12. COMPLIANCE, TRUST AND SEO
+Indian requirements: GST invoices, Consumer Protection (E-commerce) Rules display (seller details, return policy, grievance officer), DPDP-aligned consent and privacy, cookie banner. Authenticity: GI-tag badges only on genuinely GI-tagged crafts (e.g. Thewa), never invent claims. SEO: crawlable category and craft pages, product schema with reviews, OpenGraph images, canonical URLs, Hindi hreflang, blog schema, fast Core Web Vitals.
+13. MOCK PRODUCT DATABASE (100+ PRODUCTS, SEEDED VIA BACKEND AT THE END)
+Rule: build every feature against a small dev fixture first (about 10 products). Only in the FINAL phase, after checkout, B2B, search, admin and blog all work, build and run a backend seeding pipeline that loads at least 108 mock products (target 108, never fewer than 100) plus all supporting data into PostgreSQL. Nothing in the UI may hard-code products; every page must read from the database through the API.
+Seeding pipeline requirements:
+• Location: prisma/seed/ with typed data files (products.ts or products.json), generators and an entry point seed.ts. Commands: npm run seed (idempotent upsert by sku/slug, safe to re-run), npm run seed:reset (wipe mock data and reseed, blocked when NODE_ENV=production), npm run seed:verify (prints counts and fails if products < 100), npm run seed:purge-mock (deletes only rows with isMock = true).
+• Also expose an admin-only backend route POST /api/admin/seed (admin role, CSRF-protected, disabled in production unless ALLOW_SEED=true) that runs the same pipeline and returns a JSON summary of inserted and updated rows. The admin panel gets a 'Load demo data' button wired to it.
+• Every mock row carries isMock: true so it can be removed before launch without touching real data.
+• Seed order (respect foreign keys): artisans, categories and sub-categories, products, variants and inventory, product images, B2B price tiers, reviews, blog posts, coupons, banners, demo users, sample orders, wishlist entries. After inserting, rebuild the search index (Meilisearch/Algolia) and revalidate cached pages.
+• Output a final report: counts per table, products per category, any validation failures, and the first five product URLs to open.
+Product record (every product must be complete):
+• name, unique slug, unique sku (pattern RH-<CAT>-<craft>-<number>), category and sub-category, short and long description (60 to 120 words, warm Rajasthani voice, no false claims), craft type, region/origin town, material, care instructions, occasion tags, colour tags, gender/age tag where relevant.
+• Pricing: mrp and price in INR (discount 0 to 35%), GST rate, HSN code, weight and dimensions for shipping.
+• Variants: sizes (XS to XXL or free size), colours or sets, each with its own stock count (some low-stock, 3 to 5 items out of stock for back-in-stock testing).
+• B2B: wholesale price tiers (for example 10+, 25+, 50+, 100+ units at roughly 12%, 22%, 32%, 40% below retail), MOQ, case-pack size, lead time in days, customisable flag.
+• Craft passport: technique, artisan id (link to one of 12 seeded artisans with name, village, years of experience, short story), hours of work, GI-tag flag (true only for crafts that really hold one, such as Thewa; otherwise false).
+• Media: 3 to 5 images per product. Because real photography does not exist yet, generate on-brand local placeholder images (SVG or WebP written to public/mock/) using each craft's pattern and the Modern Rajputana palette, with descriptive alt text, and keep an images.csv mapping so real photos can be dropped in later without code changes. Never hotlink or copy images from other brands.
+• Merchandising flags: isBestseller, isNewArrival, isFeatured, isFestive, isGiftable (spread sensibly, for example 12 bestsellers, 15 new arrivals, 10 featured).
+• Ratings: average 3.9 to 4.9, review counts 0 to 180 (skewed), generated reviews (2 to 6 per product, about 350 in total) with names, cities, star ratings, light Hinglish phrasing, some with 'verified purchase'.
+• SEO fields: meta title, meta description, alt texts.
+Price bands (INR, adjust realistically): Textiles and apparel 499 to 6,999 (sarees up to 8,500) · Home furnishing 349 to 12,999 (rugs highest) · Jewellery 299 to 14,999 · Footwear and leather 799 to 4,999 · Art, décor and collectibles 399 to 18,999 · Gifting and festive 249 to 5,999.
+The 108 mock products (use these names; invent the remaining fields):
+• Textiles and Apparel (20): Sanganeri Floral Cotton Kurta; Bagru Indigo Dabu Kurta Set; Jaipuri Block-Print Anarkali; Bandhani Silk Dupatta in Rani Pink; Leheriya Chiffon Dupatta; Kota Doria Saree in Marigold; Mulmul Block-Print Saree; Bagru Hand-Block Palazzo; Men's Sanganeri Nehru Jacket; Men's Bagru Cotton Kurta; Block-Print Kids Frock; Kids Bandhani Kurta Set; Leheriya Georgette Saree; Bandhani Cotton Co-ord Set; Hand-Block Print Scarf; Jaipuri Cotton Shirt for Men; Bagru Wrap Skirt; Dabu Mud-Resist Tunic; Kota Doria Dupatta; Block-Print Cotton Stole.
+• Home Furnishing (18): Sanganeri Block-Print Double Bedsheet Set; Bagru King Bedsheet Set; Jaipuri Razai Quilt (Double); Jaipuri Razai Quilt (Single); Hand-Block Cushion Cover Set of 5; Bandhani Cushion Cover Set of 2; Cotton Dhurrie 4x6 in Geometric Weave; Jute-Cotton Runner; Hand-Knotted Wool Rug 5x8; Block-Print Table Runner; Marigold Napkin Set of 6; Block-Print Tablecloth for 6; Block-Print Curtains (Pair); Leheriya Door Curtain; Block-Print Cotton Throw; Block-Print Wall Tapestry; Pouf Cover in Bagru Print; Mirror-Work Door Toran.
+• Jewellery (18): Meenakari Peacock Jhumka; Meenakari Choker Set; Kundan Polki Necklace Set; Kundan Maang Tikka; Thewa Peacock Pendant; Thewa Earrings; Lac Bangle Set of 12; Lac Bridal Chooda; Silver Tribal Anklet Pair; Oxidised Silver Rakhdi Maang Tikka; Jadau Cocktail Ring; Silver Chandbali Earrings; Gold-Plated Aad Necklace; Pearl Kundan Bracelet; Meenakari Hair Pin Set; Temple-Style Haathphool; Silver Toe Rings; Beaded Tribal Necklace.
+• Footwear and Leather (17): Embroidered Mojari for Women; Men's Jodhpuri Leather Mojari; Kids Mojari; Camel Leather Zari Jutti; Bridal Kundan Mojari; Leather Potli Bag; Camel Leather Tote; Embroidered Sling Bag; Mirror-Work Clutch; Leather Passport Holder; Camel Leather Bifold Wallet; Block-Embossed Leather Belt; Leather Laptop Sleeve; Brass-Buckle Belt; Banjara Pouch Set; Leather Journal Cover; Jute Mirror-Work Shoulder Bag.
+• Art, Décor and Collectibles (18): Phad Painting, Pabuji ki Phad (Small); Phad Painting (Medium); Miniature Painting, Rajput Court Scene; Miniature Painting, Elephant Procession; Pichwai Painting, Lotus Pond; Blue Pottery Vase; Blue Pottery Dinner Plate Set of 4; Blue Pottery Coaster Set; Blue Pottery Soap Dish and Tray; Kathputli Puppet Pair (Raja-Rani); Wooden Kathputli Wall Set; Brass Peacock Figurine; Marble Inlay Coaster Set; Jharokha Wooden Wall Frame; Mirror-Work Wall Hanging; Terracotta Molela Plate; Hand-Painted Camel Leather Lampshade; Brass Wall Plate.
+• Gifting and Festive (17): Classic Diwali Hamper; Luxury Diwali Hamper; Brass Diya Set of 6; Brass Puja Thali Set; Kulhad Chai Set of 6; Kulhad Gift Box; Wedding Return-Gift Potli Box; Bridal Trousseau Box; Corporate Gift Box, Starter; Corporate Gift Box, Premium; Rakhi Gift Set; Spice and Tea Gift Set; Block-Print Notebook Set; Rajasthani Rose Candle Set; Marigold Scented Candle; Brass Ghanti Set; Bandhani Gift Pouch Set.
+Supporting mock data to seed in the same run: 12 artisans, 6 blog posts, 350+ reviews, 8 coupons (first order, festival, B2B), 5 homepage banners and 5 carousel slides wired to real products, 6 bundles ('Buy the set and save'), 3 demo accounts (customer, approved B2B buyer with Net-30 credit, admin; passwords from env variables, never hard-coded), 15 sample orders in different statuses, 20 B2B sample quotes and RFQs, and a few wishlist and cart records.
+Acceptance check (must pass before you say done): seed:verify shows at least 100 products with all six categories populated; every category page, filter, search, wishlist heart, cart, checkout (sandbox), B2B tier price and product page loads real seeded data; Lighthouse and the e2e tests still pass with the full catalogue; seed:purge-mock cleanly removes demo data.
+14. DELIVERABLES AND PROCESS
+Build in phases and show me progress after each:
+1.  Project setup, design tokens, component library, mode toggle, loader.
+2.  Landing page with all interactive banners.
+3.  Catalogue, search, product page, wishlist.
+4.  Cart, checkout, payments (sandbox), orders, account.
+5.  B2B portal.
+6.  Blog, About, content pages.
+7.  Admin panel, emails, analytics.
+8.  QA: accessibility, performance, e2e tests, README with env variables, and deployment steps (Vercel plus managed Postgres). Then the last phase, only after everything above works: build and run the backend mock-data seeding pipeline from section 13 and verify that 100+ products appear across the site.
+At the end, provide: folder structure, run instructions, a list of placeholders I must replace (brand name, logo, photos, payment keys), and a backlog of next improvements. Ask me at most one clarifying question if something critical is missing; otherwise state your assumption and continue.
+Part 3: Tips for using this prompt
+• One phase at a time works better than pasting everything and hoping. Start with phases 1 and 2, then continue with 'Proceed to phase 3'.
+• Assets: generate or source arch, jaali and block-print SVGs early, and use real artisan photos before launch.
+• Claims: only publish GI, 'natural dye' or 'fair trade' claims once they are true and documented.
+• Verify before launch: payment-gateway rules, GST and consumer-law requirements change, so check current official guidance for your business.
+• Sources used for research: Harvard Mittal South Asia Institute (Fabindia, Okhai merchandising panel), MICA study on Jaipur Rugs D2C, IMARC and Design Pataki on Anokhi and Jaipur Rugs, YourStory on Rajasthani handicraft pricing, iTokri and Vajiram craft guides on Phad, Thewa, Meenakari, Bandhani, Leheriya, plus textile notes on Sanganeri versus Bagru.

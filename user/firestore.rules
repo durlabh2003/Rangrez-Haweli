@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.phone_number != null);
+    }
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+    function isTokenAdmin() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'durlabhdaryani70@gmail.com';
+    }
+    function isAdmin() {
+      return isTokenAdmin() || (isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isValidUserProfile(data, expectedUid) {
+      return data.keys().hasAll(['uid', 'displayName', 'moharCoins', 'preferredTheme', 'wishlistIds', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'photoURL', 'moharCoins', 'preferredTheme', 'wishlistIds', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == expectedUid
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500))
+        && data.moharCoins is int && data.moharCoins >= 0 && data.moharCoins <= 1000000
+        && data.preferredTheme in ['dhoop', 'raat']
+        && data.wishlistIds is list && data.wishlistIds.size() <= 100
+        && (data.wishlistIds.size() == 0 || (data.wishlistIds[0] is string && data.wishlistIds[0].size() <= 64))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateInfo(data, expectedUid) {
+      return data.keys().hasAll(['uid', 'email', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'phone', 'defaultCity', 'defaultPincode', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == expectedUid
+        && data.email is string && data.email.size() >= 0 && data.email.size() <= 160
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 24))
+        && (!('defaultCity' in data) || (data.defaultCity is string && data.defaultCity.size() <= 80))
+        && (!('defaultPincode' in data) || (data.defaultPincode is string && data.defaultPincode.size() <= 6))
+        && data.updatedAt is timestamp;
+    }
+
+    // Bootstrapped Admin Registry
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && isOwner(adminUid);
+      allow list, create, update, delete: if false;
+    }
+
+    // Connection Probe Document
+    match /test/connection {
+      allow get: if true;
+      allow list, create, update, delete: if false;
+    }
+
+    // Patron Public Profile & Wishlist (Owner read/write + owner DPDP deletion)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerified()
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            isOwner(userId) && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['wishlistIds', 'updatedAt']) ||
+              incoming().diff(existing()).affectedKeys().hasOnly(['preferredTheme', 'updatedAt']) ||
+              incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt'])
+            )
+          )
+        );
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      // Isolated PII Subcollection
+      match /private/{docId} {
+        allow get: if isValidId(userId) && docId == 'info' && (isOwner(userId) || isAdmin());
+        allow list: if false;
+        allow create: if isValidId(userId)
+          && docId == 'info'
+          && isOwner(userId)
+          && isValidUserPrivateInfo(incoming(), userId)
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && docId == 'info'
+          && isOwner(userId)
+          && isValidUserPrivateInfo(incoming(), userId)
+          && incoming().uid == existing().uid
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'phone', 'defaultCity', 'defaultPincode', 'updatedAt']);
+        allow delete: if isValidId(userId) && docId == 'info' && isOwner(userId);
+      }
+    }
+
+    // Server-Created Orders (Read-only for owner or admin; zero client writes)
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && isVerified() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isVerified() && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    // Server-Managed Catalog, Coupons, Reviews, Claims & Config (Zero client writes)
+    match /products/{productId} {
+      allow get: if isValidId(productId) && existing().isMock == false;
+      allow list: if resource.data.isMock == false;
+      allow create, update, delete: if false;
+    }
+    match /reviews/{reviewId} {
+      allow get: if isValidId(reviewId) && existing().isMock == false;
+      allow list: if resource.data.isMock == false;
+      allow create, update, delete: if false;
+    }
+    match /coupons/{couponCode} {
+      allow get, list, create, update, delete: if false;
+    }
+    match /b2bApplications/{appId} {
+      allow get: if isVerified() && (existing().userId == request.auth.uid || isAdmin());
+      allow list, create, update, delete: if false;
+    }
+    match /quotes/{quoteId} {
+      allow get: if isAdmin();
+      allow list, create, update, delete: if false;
+    }
+    match /config/{docId} {
+      allow get: if docId == 'store';
+      allow list, create, update, delete: if false;
+    }
+    match /leads/{leadId} {
+      allow get: if isValidId(leadId) && isVerified() && (existing().userId == request.auth.uid || isAdmin());
+      allow list, create, update, delete: if false;
+    }
+    match /supportQueries/{queryId} {
+      allow get: if isValidId(queryId) && isVerified() && (existing().userId == request.auth.uid || isAdmin());
+      allow list, create, update, delete: if false;
+    }
+  }
+}

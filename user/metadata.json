@@ -1,0 +1,6 @@
+{
+  "name": "Rangrez Haveli",
+  "description": "Rajasthan, crafted by hand. Delivered to your door. D2C & B2B heritage crafts storefront with documented artisan provenance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

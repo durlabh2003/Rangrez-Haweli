@@ -1,0 +1,226 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated patron profile, loyalty balance, preferences, and saved wishlist IDs.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128,
+          "description": "Firebase Auth UID of the patron."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Patron display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Profile avatar URL."
+        },
+        "moharCoins": {
+          "type": "integer",
+          "description": "Loyalty coin balance."
+        },
+        "preferredTheme": {
+          "type": "string",
+          "enum": ["dhoop", "raat"],
+          "description": "Saved Day/Night theme preference."
+        },
+        "wishlistIds": {
+          "type": "array",
+          "description": "Bounded list of saved product IDs (max 100).",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": ["uid", "displayName", "moharCoins", "preferredTheme", "wishlistIds", "createdAt", "updatedAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII contact and shipping preferences for an authenticated patron.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 160
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 24
+        },
+        "defaultCity": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "defaultPincode": {
+          "type": "string",
+          "pattern": "^[0-9]{6}$",
+          "maxLength": 6
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "updatedAt"]
+    },
+    "CrmLead": {
+      "title": "CrmLead",
+      "description": "High-intent patron or B2B buyer lead captured via authenticated store actions and managed in Admin CRM.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 64 },
+        "userId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "phone": { "type": "string", "maxLength": 24 },
+        "channel": { "type": "string", "enum": ["D2C", "B2B"] },
+        "stage": { "type": "string", "enum": ["New Lead", "Contacted", "Qualified", "Proposal Sent", "Converted", "Lost"] },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "leadScore": { "type": "integer" },
+        "estimatedValueInr": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "channel", "stage", "priority", "leadScore", "createdAt", "updatedAt"]
+    },
+    "SupportQuery": {
+      "title": "SupportQuery",
+      "description": "Customer inquiry, B2B question, or DPDP grievance ticket managed in the Admin Queries Desk.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 64 },
+        "ticketNumber": { "type": "string", "maxLength": 32 },
+        "userId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "category": { "type": "string", "maxLength": 64 },
+        "subject": { "type": "string", "maxLength": 160 },
+        "status": { "type": "string", "enum": ["Open", "In Progress", "Resolved", "Closed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ticketNumber", "name", "email", "subject", "status", "createdAt", "updatedAt"]
+    },
+    "PatronOrder": {
+      "title": "PatronOrder",
+      "description": "Authenticated patron craft order persisted in Firestore.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 64
+        },
+        "orderNumber": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 32
+        },
+        "userId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "customerName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["UPI", "Card", "Netbanking", "COD", "NEFT", "Net-30"]
+        },
+        "orderStatus": {
+          "type": "string",
+          "enum": ["Confirmed", "Artisan Packed", "Shipped", "Delivered"]
+        },
+        "channel": {
+          "type": "string",
+          "enum": ["D2C", "B2B"]
+        },
+        "total": {
+          "type": "number"
+        },
+        "itemCount": {
+          "type": "integer"
+        },
+        "summaryLine": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "orderNumber",
+        "userId",
+        "customerName",
+        "city",
+        "paymentMethod",
+        "orderStatus",
+        "channel",
+        "total",
+        "itemCount",
+        "summaryLine",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Patron public/app preferences, moharCoins balance, and bounded wishlist product IDs."
+    },
+    "/users/{userId}/private/info": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Isolated PII contact details strictly accessible only to the owning authenticated user."
+    },
+    "/leads/{leadId}": {
+      "schema": { "$ref": "#/entities/CrmLead" },
+      "description": "Server-punched CRM leads managed in the Admin Console."
+    },
+    "/supportQueries/{queryId}": {
+      "schema": { "$ref": "#/entities/SupportQuery" },
+      "description": "Patron support and grievance tickets managed in the Admin Queries Desk."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/PatronOrder" },
+      "description": "Authenticated patron orders scoped strictly by userId or bootstrapped admin."
+    }
+  }
+}
