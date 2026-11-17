@@ -1,4 +1,4 @@
-import { loadStore, purgeMockData, runSeed, syncStateToFirestore } from './db';
+import { loadStore, purgeMockData, runSeed, syncStateToFirestore } from './db.js';
 
 const args = process.argv.slice(2);
 

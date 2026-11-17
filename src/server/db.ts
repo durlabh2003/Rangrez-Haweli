@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { cert, getApps, initializeApp, type App } from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
@@ -20,11 +21,11 @@ import type {
   Product,
   Review,
   SupportQuery,
-} from '../types';
+} from '../types.js';
 import {
   DEFAULT_ADMIN_CONFIG,
   DEFAULT_CLAIMS_REGISTRY,
-} from '../config/heritageConstants';
+} from '../config/heritageConstants.js';
 import {
   ARTISANS,
   BLOG_POSTS,
@@ -36,7 +37,7 @@ import {
   buildSeedOrders,
   buildSeedProducts,
   buildSeedReviews,
-} from './seedData';
+} from './seedData.js';
 
 export interface DatabaseState {
   artisans: Artisan[];
@@ -66,7 +67,12 @@ export interface DatabaseState {
   };
 }
 
-const DATA_DIR = path.resolve(process.cwd(), '.data');
+// Vercel functions only allow writes under /tmp (ephemeral, per instance).
+export const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : process.env.VERCEL
+    ? path.join(os.tmpdir(), 'rangrez-data')
+    : path.resolve(process.cwd(), '.data');
 const STORE_PATH = path.join(DATA_DIR, 'store.json');
 
 export function isProductionEnv(): boolean {

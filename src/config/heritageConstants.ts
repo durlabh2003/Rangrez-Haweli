@@ -1,4 +1,4 @@
-import type { AdminConfig, ClaimRecord } from '../types';
+import type { AdminConfig, ClaimRecord } from '../types.js';
 
 export interface CuratedGiFact {
   id: string;

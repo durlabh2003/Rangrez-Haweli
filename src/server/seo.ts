@@ -1,11 +1,11 @@
-import type { DatabaseState } from './db';
+import type { DatabaseState } from './db.js';
 import {
   getPublicBlogPosts,
   getPublicProducts,
   getPublicReviews,
   isProductionEnv,
-} from './db';
-import type { BlogPost, Product } from '../types';
+} from './db.js';
+import type { BlogPost, Product } from '../types.js';
 
 export interface SeoResolutionResult {
   status: number;

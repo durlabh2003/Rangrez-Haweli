@@ -1,4 +1,5 @@
 export {
+  DATA_DIR,
   getAdminAllowlist,
   getFirebaseAdminAuth,
   getFirebaseAdminDb,
@@ -20,8 +21,8 @@ export {
   syncStateToFirestore,
   withStoreLock,
   type DatabaseState,
-} from './db';
-import type { Product } from '../types';
+} from './db.js';
+import type { Product } from '../types.js';
 
 function colorHexFromName(name: string | undefined, fallback: string): string {
   const n = (name ?? '').toLowerCase();

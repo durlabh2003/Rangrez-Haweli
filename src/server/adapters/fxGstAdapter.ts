@@ -1,4 +1,4 @@
-import { validateGstinChecksum } from '../pricing';
+import { validateGstinChecksum } from '../pricing.js';
 
 export interface FxRatesResponse {
   baseCurrency: 'INR';

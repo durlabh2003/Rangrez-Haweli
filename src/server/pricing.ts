@@ -5,8 +5,8 @@ import type {
   GstRate,
   OrderItem,
   Product,
-} from '../types';
-import { DEFAULT_ADMIN_CONFIG } from '../config/heritageConstants';
+} from '../types.js';
+import { DEFAULT_ADMIN_CONFIG } from '../config/heritageConstants.js';
 
 export const ALLOWED_GST_RATES: readonly GstRate[] = [0, 3, 5, 18, 40] as const;
 

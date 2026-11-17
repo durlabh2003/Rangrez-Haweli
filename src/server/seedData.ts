@@ -10,8 +10,8 @@ import type {
   Order,
   Product,
   Review,
-} from '../types';
-import { getHsnGstRate } from './pricing';
+} from '../types.js';
+import { getHsnGstRate } from './pricing.js';
 
 export const GENERATED_IMAGES = {
   // Hero & About Courtyard (2)

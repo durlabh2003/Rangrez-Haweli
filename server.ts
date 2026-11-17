@@ -10,8 +10,9 @@ import helmet from 'helmet';
 import sharp from 'sharp';
 import { z } from 'zod';
 import { GoogleGenAI } from '@google/genai';
-import { createServer as createViteServer, type ViteDevServer } from 'vite';
+import type { ViteDevServer } from 'vite';
 import {
+  DATA_DIR,
   generateCraftSvg,
   getAdminAllowlist,
   getFirebaseAdminAuth,
@@ -31,32 +32,32 @@ import {
   runSeed,
   syncStateToFirestore,
   withStoreLock,
-} from './src/server/store';
-import { resolveCraftImages } from './src/server/seedData';
+} from './src/server/store.js';
+import { resolveCraftImages } from './src/server/seedData.js';
 import {
   computeServerOrderCalculation,
   getHsnGstRate,
   validateGstinChecksum,
-} from './src/server/pricing';
+} from './src/server/pricing.js';
 import {
   createPaymentOrder,
   verifyPaymentSignature,
   verifyWebhookSignature,
-} from './src/server/adapters/paymentAdapter';
-import { checkPincodeServiceability } from './src/server/adapters/courierAdapter';
+} from './src/server/adapters/paymentAdapter.js';
+import { checkPincodeServiceability } from './src/server/adapters/courierAdapter.js';
 import {
   dispatchTransactionalEmail,
   sendSmsOtp,
   verifySmsOtp,
-} from './src/server/adapters/smsEmailAdapter';
-import { getLiveFxRates, verifyGstinStatus } from './src/server/adapters/fxGstAdapter';
+} from './src/server/adapters/smsEmailAdapter.js';
+import { getLiveFxRates, verifyGstinStatus } from './src/server/adapters/fxGstAdapter.js';
 import {
   buildRobotsTxt,
   buildSitemapXml,
   injectSeoIntoHtml,
   resolveRouteSeo,
-} from './src/server/seo';
-import { CURATED_GI_FACTS, HERITAGE_GUILD_METRICS } from './src/config/heritageConstants';
+} from './src/server/seo.js';
+import { CURATED_GI_FACTS, HERITAGE_GUILD_METRICS } from './src/config/heritageConstants.js';
 import type {
   B2BApplication,
   B2BQuote,
@@ -67,7 +68,7 @@ import type {
   Order,
   Product,
   SupportQuery,
-} from './src/types';
+} from './src/types.js';
 
 interface AuthedUser {
   uid: string;
@@ -525,13 +526,17 @@ const adminCreateLeadSchema = z.object({
   note: z.string().max(600).optional(),
 });
 
-async function startServer() {
+export async function createApp() {
   const app = express();
-  const PORT = Number(process.env.PORT || 3000);
   const appDir = process.cwd();
-  const imgCacheDir = path.resolve(appDir, '.data', 'img-cache');
+  const imgCacheDir = path.join(DATA_DIR, 'img-cache');
   if (!fs.existsSync(imgCacheDir)) {
     fs.mkdirSync(imgCacheDir, { recursive: true });
+  }
+
+  // Behind Vercel's proxy: needed for correct client IPs (rate limiting) and https req.protocol.
+  if (process.env.VERCEL) {
+    app.set('trust proxy', 1);
   }
 
   // Initial store load & non-blocking Firestore connection probe
@@ -2694,7 +2699,10 @@ async function startServer() {
   let vite: ViteDevServer | null = null;
   const distDir = path.resolve(appDir, 'dist');
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    // Specifier held in a variable so Vercel's file tracer doesn't pack Vite into the function.
+    const viteSpecifier = 'vite';
+    const { createServer: createViteServer } = (await import(viteSpecifier)) as typeof import('vite');
     vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'custom',
@@ -2743,9 +2751,15 @@ async function startServer() {
     }
   });
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Rangrez Haveli server running on http://localhost:${PORT} (env=${isProductionEnv() ? 'production' : 'development'})`);
-  });
+  return app;
 }
 
-startServer();
+// On Vercel the app is served by api/index.ts; locally we listen on a port.
+if (!process.env.VERCEL) {
+  const PORT = Number(process.env.PORT || 3000);
+  createApp().then((app) => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Rangrez Haveli server running on http://localhost:${PORT} (env=${isProductionEnv() ? 'production' : 'development'})`);
+    });
+  });
+}

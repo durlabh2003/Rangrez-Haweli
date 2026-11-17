@@ -1,5 +1,5 @@
-import type { AdminConfig } from '../../types';
-import { DEFAULT_ADMIN_CONFIG } from '../../config/heritageConstants';
+import type { AdminConfig } from '../../types.js';
+import { DEFAULT_ADMIN_CONFIG } from '../../config/heritageConstants.js';
 
 export interface PincodeServiceabilityResult {
   pincode: string;
