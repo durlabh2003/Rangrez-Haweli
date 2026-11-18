@@ -339,7 +339,25 @@ async function requireAuth(req: AuthedRequest, res: Response, next: NextFunction
   next();
 }
 
+// TEMPORARY local-dev escape hatch for the standalone admin console (../Rangrez-Haweli-Admin).
+// Only honoured when ADMIN_AUTH_DISABLED=true AND the server is not production AND not on Vercel.
+function isAdminAuthDisabled(): boolean {
+  return process.env.ADMIN_AUTH_DISABLED === 'true' && !isProductionEnv() && !process.env.VERCEL;
+}
+
 async function requireAdmin(req: AuthedRequest, res: Response, next: NextFunction) {
+  if (isAdminAuthDisabled()) {
+    req.user = (await extractUser(req)) ?? {
+      uid: 'dev-admin',
+      name: 'Local Dev Admin',
+      email: 'dev-admin@localhost',
+      emailVerified: true,
+      isAdmin: true,
+    };
+    req.user.isAdmin = true;
+    next();
+    return;
+  }
   const user = await extractUser(req);
   if (!user) {
     res.status(401).json({ error: 'Admin authentication token required.' });
@@ -617,25 +635,33 @@ export async function createApp() {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+  const isSameOrigin = (origin: string, host: string | undefined) => {
+    try {
+      return Boolean(host) && new URL(origin).host === host;
+    } catch {
+      return false;
+    }
+  };
   app.use(
-    cors({
-      origin: (origin, cb) => {
-        if (!origin) return cb(null, true);
-        if (
-          allowedOrigins.includes(origin) ||
-          origin.startsWith('http://localhost:') ||
-          origin.startsWith('http://127.0.0.1:') ||
-          origin.endsWith('.run.app') ||
-          origin.endsWith('.web.app') ||
-          origin.endsWith('.google.com') ||
-          origin.endsWith('.googleusercontent.com') ||
-          origin.endsWith('.usercontent.goog')
-        ) {
-          return cb(null, true);
-        }
-        return cb(new Error('Origin not permitted by CORS policy'));
-      },
-      credentials: true,
+    cors((req, cb) => {
+      const origin = req.headers.origin;
+      const host = req.headers.host;
+      if (!origin) return cb(null, { origin: true, credentials: true });
+      if (
+        // The site calling its own API (production, preview and custom domains).
+        isSameOrigin(origin, host) ||
+        allowedOrigins.includes(origin) ||
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.endsWith('.run.app') ||
+        origin.endsWith('.web.app') ||
+        origin.endsWith('.google.com') ||
+        origin.endsWith('.googleusercontent.com') ||
+        origin.endsWith('.usercontent.goog')
+      ) {
+        return cb(null, { origin: true, credentials: true });
+      }
+      return cb(new Error('Origin not permitted by CORS policy'));
     })
   );
 
