@@ -98,10 +98,10 @@ let firestoreStatusNote = 'Not initialized yet';
 function initFirebaseAdmin(): void {
   if (adminApp) return;
   try {
-    let projectId = process.env.FIREBASE_PROJECT_ID || 'gen-lang-client-0813412107';
+    let projectId = process.env.FIREBASE_PROJECT_ID || 'rangrezhaweli';
     let databaseId =
       process.env.FIRESTORE_DATABASE_ID ||
-      'ai-studio-rangrezhaveli-9969d5c1-ae97-431a-8ac6-38a5556fc07e';
+      '(default)';
 
     const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
     if (fs.existsSync(configPath)) {

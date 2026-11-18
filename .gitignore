@@ -10,3 +10,6 @@ coverage/
 # Local runtime data & tool artifacts
 .data/
 .aistudio/
+
+# Firebase service account keys (never commit)
+*firebase-adminsdk*.json

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { initStore, loadStore, purgeMockData, runSeed, syncStateToFirestore } from './db.js';
 
 const args = process.argv.slice(2);
